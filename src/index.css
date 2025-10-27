@@ -1,0 +1,116 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+/* Toast container overrides */
+.Toastify__toast-container {
+  width: 320px;
+  max-width: 90vw;
+}
+
+.Toastify__toast {
+  border-radius: 12px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
+  padding: 16px;
+  min-height: 60px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.Toastify__toast--success {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: white;
+}
+
+.Toastify__toast--error {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  color: white;
+}
+
+.Toastify__toast--info {
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  color: white;
+}
+
+.Toastify__toast--warning {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: white;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #0A7E5C 0%, #2E8B8A 100%);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #065f46 0%, #0f766e 100%);
+}
+
+/* Animation utilities */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(135deg, #0A7E5C 0%, #2E8B8A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Glassmorphism effects */
+.glass {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Premium button animations */
+.btn-primary {
+  background: linear-gradient(135deg, #0A7E5C 0%, #2E8B8A 100%);
+  transition: all 0.2s ease-out;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #065f46 0%, #0f766e 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 25px rgba(10, 126, 92, 0.3);
+}
+
+.btn-secondary {
+  background: transparent;
+  border: 2px solid transparent;
+  background-image: linear-gradient(white, white), linear-gradient(135deg, #0A7E5C 0%, #2E8B8A 100%);
+  background-origin: border-box;
+  background-clip: content-box, border-box;
+  transition: all 0.2s ease-out;
+}
+
+.btn-secondary:hover {
+  background-image: linear-gradient(135deg, rgba(10, 126, 92, 0.05) 0%, rgba(46, 139, 138, 0.05) 100%), linear-gradient(135deg, #0A7E5C 0%, #2E8B8A 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(10, 126, 92, 0.15);
+}
