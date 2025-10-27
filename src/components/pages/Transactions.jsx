@@ -186,19 +186,17 @@ const closeModal = () => {
   };
 
   // Calculate totals for filtered transactions
-  const calculateTotals = () => {
+const calculateTotals = () => {
     const income = filteredTransactions
-.filter(t => t.type_c === "income")
-const income = filteredTransactions
-.filter(t => t.type_c === "income")
+      .filter(t => t.type_c === "income")
       .reduce((sum, t) => sum + t.amount_c, 0);
 
     const expenses = filteredTransactions
       .filter(t => t.type_c === "expense")
-.reduce((sum, t) => sum + t.amount_c, 0);
+      .reduce((sum, t) => sum + t.amount_c, 0);
 
     return { income, expenses, balance: income - expenses };
-
+  };
   if (loading) {
     return <Loading type="table" />;
   }
