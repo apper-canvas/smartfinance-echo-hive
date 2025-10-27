@@ -17,12 +17,12 @@ const GoalModal = ({ isOpen, onClose, onSubmit, goal = null, mode = "add" }) => 
 
   // Set form data when goal prop changes
   useEffect(() => {
-    if (goal && mode === "edit") {
+if (goal && mode === "edit") {
       setFormData({
-        name: goal.name,
-        targetAmount: goal.targetAmount.toString(),
-        currentAmount: goal.currentAmount.toString(),
-        deadline: format(new Date(goal.deadline), "yyyy-MM-dd"),
+        name: goal.name_c,
+        targetAmount: goal.target_amount_c.toString(),
+        currentAmount: goal.current_amount_c.toString(),
+        deadline: format(new Date(goal.deadline_c), "yyyy-MM-dd"),
       });
     } else {
       setFormData({

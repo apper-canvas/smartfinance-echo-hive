@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
-import Button from "@/components/atoms/Button";
-import Input from "@/components/atoms/Input";
-import GoalCard from "@/components/molecules/GoalCard";
-import Loading from "@/components/ui/Loading";
-import Error from "@/components/ui/Error";
-import Empty from "@/components/ui/Empty";
-import GoalModal from "@/components/organisms/GoalModal";
-import ApperIcon from "@/components/ApperIcon";
+import React, { useEffect, useState } from "react";
 import { goalService } from "@/services/api/goalService";
 import { toast } from "react-toastify";
+import ApperIcon from "@/components/ApperIcon";
+import Button from "@/components/atoms/Button";
+import Input from "@/components/atoms/Input";
+import GoalModal from "@/components/organisms/GoalModal";
+import Loading from "@/components/ui/Loading";
+import Empty from "@/components/ui/Empty";
+import Error from "@/components/ui/Error";
+import GoalCard from "@/components/molecules/GoalCard";
 
 const Goals = () => {
   const [goals, setGoals] = useState([]);
@@ -43,21 +43,22 @@ const Goals = () => {
     }
   };
 
-  // Categorize goals
+// Categorize goals
   const categorizeGoals = () => {
-    const active = goals.filter(goal => goal.currentAmount < goal.targetAmount);
-    const completed = goals.filter(goal => goal.currentAmount >= goal.targetAmount);
-    
-    return { active, completed };
-  };
+    const active = goals.filter(goal => goal.current_amount_c < goal.target_amount_c);
+    const completed = goals.filter(goal => goal.current_amount_c >= goal.target_amount_c);
 
-  // Calculate total progress
-  const getTotalProgress = () => {
-    const totalTarget = goals.reduce((sum, goal) => sum + goal.targetAmount, 0);
-    const totalCurrent = goals.reduce((sum, goal) => sum + goal.currentAmount, 0);
+    const totalTarget = goals.reduce((sum, goal) => sum + goal.target_amount_c, 0);
+    const totalCurrent = goals.reduce((sum, goal) => sum + goal.current_amount_c, 0);
     const progress = totalTarget > 0 ? (totalCurrent / totalTarget) * 100 : 0;
     
-    return { totalTarget, totalCurrent, progress };
+    return { 
+      active, 
+      completed, 
+      totalTarget, 
+      totalCurrent, 
+      progress 
+    };
   };
 
   const handleAddGoal = async (goalData) => {
@@ -102,22 +103,24 @@ const Goals = () => {
     }
 
     try {
-      const newAmount = selectedGoal.currentAmount + parseFloat(addFundsAmount);
+const newAmount = selectedGoal.current_amount_c + parseFloat(addFundsAmount);
       const updatedGoal = {
-        ...selectedGoal,
+        name: selectedGoal.name_c,
+        targetAmount: selectedGoal.target_amount_c,
         currentAmount: newAmount,
+        deadline: selectedGoal.deadline_c
       };
       
       await goalService.update(selectedGoal.Id, updatedGoal);
-      await loadGoals();
       setShowAddFundsModal(false);
       setSelectedGoal(null);
       setAddFundsAmount("");
-      
-      const isCompleted = newAmount >= selectedGoal.targetAmount;
+      await loadGoals();
+
+      const isCompleted = newAmount >= selectedGoal.target_amount_c;
       toast.success(
         isCompleted 
-          ? `Congratulations! You've completed your "${selectedGoal.name}" goal!` 
+          ? `Congratulations! You've completed your "${selectedGoal.name_c}" goal!`
           : `Successfully added $${parseFloat(addFundsAmount).toLocaleString()} to your goal!`
       );
     } catch (error) {
@@ -151,10 +154,7 @@ const Goals = () => {
       />
     );
   }
-
-  const { active, completed } = categorizeGoals();
-  const totalProgress = getTotalProgress();
-
+const { active, completed, totalTarget, totalCurrent, progress } = categorizeGoals();
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -189,12 +189,12 @@ const Goals = () => {
             <div className="flex items-center space-x-3 mb-2">
               <ApperIcon name="Target" size={20} className="text-success" />
               <span className="text-sm font-medium text-success">Total Progress</span>
-            </div>
+</div>
             <div className="text-2xl font-bold text-gray-900 mb-1">
-              {totalProgress.progress.toFixed(1)}%
+              {progress.toFixed(1)}%
             </div>
             <div className="text-sm text-gray-600">
-              ${totalProgress.totalCurrent.toLocaleString()} of ${totalProgress.totalTarget.toLocaleString()}
+              ${totalCurrent.toLocaleString()} of ${totalTarget.toLocaleString()}
             </div>
           </div>
           
@@ -320,12 +320,12 @@ const Goals = () => {
               {selectedGoal && (
                 <div className="bg-gradient-to-r from-primary-50 to-secondary-50 rounded-lg p-4">
                   <h3 className="font-semibold text-primary-800 mb-2">
-                    {selectedGoal.name}
+{selectedGoal.name_c}
                   </h3>
                   <div className="text-sm text-primary-700 space-y-1">
-                    <div>Current: ${selectedGoal.currentAmount.toLocaleString()}</div>
-                    <div>Target: ${selectedGoal.targetAmount.toLocaleString()}</div>
-                    <div>Remaining: ${(selectedGoal.targetAmount - selectedGoal.currentAmount).toLocaleString()}</div>
+                    <div>Current: ${selectedGoal.current_amount_c.toLocaleString()}</div>
+                    <div>Target: ${selectedGoal.target_amount_c.toLocaleString()}</div>
+                    <div>Remaining: ${(selectedGoal.target_amount_c - selectedGoal.current_amount_c).toLocaleString()}</div>
                   </div>
                 </div>
               )}

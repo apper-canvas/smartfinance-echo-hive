@@ -1,81 +1,188 @@
-import categoriesData from "@/services/mockData/categories.json";
-
-// Simulate API delay
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+import { getApperClient } from "@/services/apperClient";
 
 class CategoryService {
-  constructor() {
-    this.categories = [...categoriesData];
-  }
-
   async getAll() {
-    await delay(200);
-    return [...this.categories];
+    try {
+      const apperClient = getApperClient();
+      const response = await apperClient.fetchRecords('category_c', {
+        fields: [
+          {"field": {"Name": "name_c"}},
+          {"field": {"Name": "type_c"}},
+          {"field": {"Name": "color_c"}},
+          {"field": {"Name": "icon_c"}}
+        ]
+      });
+
+      if (!response.success) {
+        console.error(response.message);
+        return [];
+      }
+
+      return response.data || [];
+    } catch (error) {
+      console.error("Error fetching categories:", error?.response?.data?.message || error);
+      return [];
+    }
   }
 
   async getById(id) {
-    await delay(150);
-    const category = this.categories.find(c => c.Id === parseInt(id));
-    if (!category) {
-      throw new Error(`Category with Id ${id} not found`);
+    try {
+      const apperClient = getApperClient();
+      const response = await apperClient.getRecordById('category_c', parseInt(id), {
+        fields: [
+          {"field": {"Name": "name_c"}},
+          {"field": {"Name": "type_c"}},
+          {"field": {"Name": "color_c"}},
+          {"field": {"Name": "icon_c"}}
+        ]
+      });
+
+      if (!response.success) {
+        console.error(response.message);
+        return null;
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching category ${id}:`, error?.response?.data?.message || error);
+      return null;
     }
-    return { ...category };
   }
 
-async create(categoryData) {
-    await delay(300);
-    
-    // Find highest Id and add 1
-    const maxId = Math.max(...this.categories.map(c => c.Id), 0);
-    const newCategory = {
-      name: categoryData.name,
-      type: categoryData.type,
-      color: categoryData.color || "#3B82F6",
-      icon: categoryData.icon || "ShoppingCart",
-      Id: maxId + 1,
-    };
-    
-    this.categories.push(newCategory);
-    return { ...newCategory };
+  async create(categoryData) {
+    try {
+      const apperClient = getApperClient();
+      const response = await apperClient.createRecord('category_c', {
+        records: [{
+          name_c: categoryData.name,
+          type_c: categoryData.type,
+          color_c: categoryData.color || "#3B82F6",
+          icon_c: categoryData.icon || "ShoppingCart"
+        }]
+      });
+
+      if (!response.success) {
+        console.error(response.message);
+        return null;
+      }
+
+      if (response.results) {
+        const successful = response.results.filter(r => r.success);
+        const failed = response.results.filter(r => !r.success);
+        
+        if (failed.length > 0) {
+          console.error(`Failed to create ${failed.length} categories: ${JSON.stringify(failed)}`);
+          failed.forEach(record => {
+            record.errors?.forEach(error => console.error(`${error.fieldLabel}: ${error}`));
+          });
+        }
+        
+        return successful.length > 0 ? successful[0].data : null;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error creating category:", error?.response?.data?.message || error);
+      return null;
+    }
   }
 
-async update(id, categoryData) {
-    await delay(300);
-    
-    const index = this.categories.findIndex(c => c.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error(`Category with Id ${id} not found`);
+  async update(id, categoryData) {
+    try {
+      const apperClient = getApperClient();
+      const response = await apperClient.updateRecord('category_c', {
+        records: [{
+          Id: parseInt(id),
+          name_c: categoryData.name,
+          type_c: categoryData.type,
+          color_c: categoryData.color,
+          icon_c: categoryData.icon
+        }]
+      });
+
+      if (!response.success) {
+        console.error(response.message);
+        return null;
+      }
+
+      if (response.results) {
+        const successful = response.results.filter(r => r.success);
+        const failed = response.results.filter(r => !r.success);
+        
+        if (failed.length > 0) {
+          console.error(`Failed to update ${failed.length} categories: ${JSON.stringify(failed)}`);
+          failed.forEach(record => {
+            record.errors?.forEach(error => console.error(`${error.fieldLabel}: ${error}`));
+          });
+        }
+        
+        return successful.length > 0 ? successful[0].data : null;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error updating category:", error?.response?.data?.message || error);
+      return null;
     }
-    
-    this.categories[index] = {
-      ...this.categories[index],
-      name: categoryData.name,
-      type: categoryData.type,
-      color: categoryData.color || this.categories[index].color,
-      icon: categoryData.icon || this.categories[index].icon,
-      Id: parseInt(id), // Ensure Id remains unchanged
-    };
-    
-    return { ...this.categories[index] };
   }
 
   async delete(id) {
-    await delay(250);
-    
-    const index = this.categories.findIndex(c => c.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error(`Category with Id ${id} not found`);
+    try {
+      const apperClient = getApperClient();
+      const response = await apperClient.deleteRecord('category_c', {
+        RecordIds: [parseInt(id)]
+      });
+
+      if (!response.success) {
+        console.error(response.message);
+        return false;
+      }
+
+      if (response.results) {
+        const successful = response.results.filter(r => r.success);
+        const failed = response.results.filter(r => !r.success);
+        
+        if (failed.length > 0) {
+          console.error(`Failed to delete ${failed.length} categories: ${JSON.stringify(failed)}`);
+        }
+        
+        return successful.length > 0;
+      }
+
+      return false;
+    } catch (error) {
+      console.error("Error deleting category:", error?.response?.data?.message || error);
+      return false;
     }
-    
-    const deletedCategory = this.categories[index];
-    this.categories.splice(index, 1);
-    return { ...deletedCategory };
   }
 
-  // Additional helper methods
   async getByType(type) {
-    await delay(150);
-    return this.categories.filter(c => c.type === type);
+    try {
+      const apperClient = getApperClient();
+      const response = await apperClient.fetchRecords('category_c', {
+        fields: [
+          {"field": {"Name": "name_c"}},
+          {"field": {"Name": "type_c"}},
+          {"field": {"Name": "color_c"}},
+          {"field": {"Name": "icon_c"}}
+        ],
+        where: [{
+          FieldName: "type_c",
+          Operator: "EqualTo",
+          Values: [type]
+        }]
+      });
+
+      if (!response.success) {
+        console.error(response.message);
+        return [];
+      }
+
+      return response.data || [];
+    } catch (error) {
+      console.error("Error fetching categories by type:", error?.response?.data?.message || error);
+      return [];
+    }
   }
 
   async getIncomeCategories() {

@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from "react";
-import StatCard from "@/components/molecules/StatCard";
-import TransactionItem from "@/components/molecules/TransactionItem";
-import Card from "@/components/atoms/Card";
-import Button from "@/components/atoms/Button";
-import Loading from "@/components/ui/Loading";
-import Error from "@/components/ui/Error";
-import Empty from "@/components/ui/Empty";
-import TransactionModal from "@/components/organisms/TransactionModal";
-import ApperIcon from "@/components/ApperIcon";
+import React, { useEffect, useState } from "react";
 import { transactionService } from "@/services/api/transactionService";
 import { budgetService } from "@/services/api/budgetService";
 import { goalService } from "@/services/api/goalService";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { endOfMonth, format, startOfMonth } from "date-fns";
+import ApperIcon from "@/components/ApperIcon";
+import Button from "@/components/atoms/Button";
+import Card from "@/components/atoms/Card";
+import Transactions from "@/components/pages/Transactions";
+import Goals from "@/components/pages/Goals";
+import TransactionModal from "@/components/organisms/TransactionModal";
+import Loading from "@/components/ui/Loading";
+import Empty from "@/components/ui/Empty";
+import Error from "@/components/ui/Error";
+import TransactionItem from "@/components/molecules/TransactionItem";
+import StatCard from "@/components/molecules/StatCard";
 
 const Dashboard = () => {
   const [transactions, setTransactions] = useState([]);
@@ -47,58 +49,75 @@ const Dashboard = () => {
     }
   };
 
-  // Calculate current month statistics
+// Calculate current month statistics
   const getCurrentMonthStats = () => {
     const currentMonthStart = startOfMonth(new Date());
     const currentMonthEnd = endOfMonth(new Date());
     
     const currentMonthTransactions = transactions.filter(transaction => {
-      const transactionDate = new Date(transaction.date);
+      const transactionDate = new Date(transaction.date_c);
       return transactionDate >= currentMonthStart && transactionDate <= currentMonthEnd;
     });
 
-    const income = currentMonthTransactions
-      .filter(t => t.type === "income")
-      .reduce((sum, t) => sum + t.amount, 0);
+    const totalIncome = currentMonthTransactions
+      .filter(t => t.type_c === "income")
+      .reduce((sum, t) => sum + t.amount_c, 0);
 
-    const expenses = currentMonthTransactions
-      .filter(t => t.type === "expense")
-      .reduce((sum, t) => sum + t.amount, 0);
+    const totalExpenses = currentMonthTransactions
+      .filter(t => t.type_c === "expense")
+      .reduce((sum, t) => sum + t.amount_c, 0);
 
-    const balance = income - expenses;
+    const totalBalance = totalIncome - totalExpenses;
 
-    return { income, expenses, balance, transactionCount: currentMonthTransactions.length };
+    return {
+      income: totalIncome,
+      expenses: totalExpenses,
+      balance: totalBalance,
+      transactionCount: currentMonthTransactions.length
+    };
   };
 
-  // Get recent transactions (last 5)
   const getRecentTransactions = () => {
-    return [...transactions]
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
-      .slice(0, 5);
+    return transactions
+      .sort((a, b) => new Date(b.date_c) - new Date(a.date_c))
+      .slice(0, 3);
   };
 
-  // Calculate total savings progress
   const getTotalSavingsProgress = () => {
-    const totalTarget = goals.reduce((sum, goal) => sum + goal.targetAmount, 0);
-    const totalCurrent = goals.reduce((sum, goal) => sum + goal.currentAmount, 0);
+    const totalTarget = goals.reduce((sum, goal) => sum + (goal.target_amount_c || 0), 0);
+    const totalCurrent = goals.reduce((sum, goal) => sum + (goal.current_amount_c || 0), 0);
     const progress = totalTarget > 0 ? (totalCurrent / totalTarget) * 100 : 0;
-    
-    return { totalTarget, totalCurrent, progress };
+
+    return {
+      totalCurrent: totalCurrent,
+      totalTarget: totalTarget,
+      progress: progress
+    };
   };
 
-  // Get budget status for current month
   const getBudgetStatus = () => {
-    const currentMonthBudgets = budgets.filter(budget => budget.month === currentMonth);
-    const totalBudgeted = currentMonthBudgets.reduce((sum, budget) => sum + budget.amount, 0);
-    const totalSpent = currentMonthBudgets.reduce((sum, budget) => sum + (budget.spent || 0), 0);
-    const progress = totalBudgeted > 0 ? (totalSpent / totalBudgeted) * 100 : 0;
+    const currentMonthBudgets = budgets.filter(budget => budget.month_c === currentMonth);
     
-    return { totalBudgeted, totalSpent, progress };
+    const totalBudgeted = currentMonthBudgets.reduce((sum, budget) => sum + (budget.amount_c || 0), 0);
+    const totalSpent = currentMonthBudgets.reduce((sum, budget) => sum + (budget.spent_c || 0), 0);
+    const progress = totalBudgeted > 0 ? (totalSpent / totalBudgeted) * 100 : 0;
+
+    return {
+      totalBudgeted: totalBudgeted,
+      totalSpent: totalSpent,
+      progress: progress
+    };
   };
 
   const handleAddTransaction = async (transactionData) => {
-    await transactionService.create(transactionData);
-    await loadDashboardData();
+    try {
+      await transactionService.create(transactionData);
+      setShowTransactionModal(false);
+      await loadDashboardData();
+    } catch (err) {
+      console.error("Failed to add transaction:", err);
+      throw err;
+    }
   };
 
   if (loading) {

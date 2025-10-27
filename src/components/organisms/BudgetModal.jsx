@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
-import Button from "@/components/atoms/Button";
-import Input from "@/components/atoms/Input";
-import Select from "@/components/atoms/Select";
-import ApperIcon from "@/components/ApperIcon";
+import React, { useEffect, useState } from "react";
 import { categoryService } from "@/services/api/categoryService";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
+import ApperIcon from "@/components/ApperIcon";
+import Select from "@/components/atoms/Select";
+import Button from "@/components/atoms/Button";
+import Input from "@/components/atoms/Input";
 
 const BudgetModal = ({ isOpen, onClose, onSubmit, budget = null, mode = "add" }) => {
   const [categories, setCategories] = useState([]);
@@ -21,9 +21,8 @@ const BudgetModal = ({ isOpen, onClose, onSubmit, budget = null, mode = "add" })
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const data = await categoryService.getAll();
-        // Only show expense categories for budgets
-        setCategories(data.filter(cat => cat.type === "expense"));
+const data = await categoryService.getAll();
+        setCategories(data.filter(cat => cat.type_c === "expense"));
       } catch (error) {
         console.error("Failed to load categories:", error);
         toast.error("Failed to load categories");
@@ -38,10 +37,10 @@ const BudgetModal = ({ isOpen, onClose, onSubmit, budget = null, mode = "add" })
   // Set form data when budget prop changes
   useEffect(() => {
     if (budget && mode === "edit") {
-      setFormData({
-        categoryId: budget.categoryId,
-        amount: budget.amount.toString(),
-        month: budget.month,
+setFormData({
+        categoryId: budget.category_id_c?.Id?.toString() || "",
+        amount: budget.amount_c.toString(),
+        month: budget.month_c,
       });
     } else {
       setFormData({
@@ -111,9 +110,9 @@ const BudgetModal = ({ isOpen, onClose, onSubmit, budget = null, mode = "add" })
     }
   };
 
-  const getCategoryName = (categoryId) => {
+const getCategoryName = (categoryId) => {
     const category = categories.find(cat => cat.Id.toString() === categoryId);
-    return category ? category.name : "";
+return category ? category.name_c : "Category";
   };
 
   if (!isOpen) return null;
@@ -143,9 +142,9 @@ const BudgetModal = ({ isOpen, onClose, onSubmit, budget = null, mode = "add" })
             required
             placeholder="Select a category"
           >
-            {categories.map((category) => (
+{categories.map((category) => (
               <option key={category.Id} value={category.Id}>
-                {category.name}
+                {category.name_c}
               </option>
             ))}
           </Select>

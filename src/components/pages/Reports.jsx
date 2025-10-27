@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from "react";
-import Button from "@/components/atoms/Button";
-import Select from "@/components/atoms/Select";
-import Card from "@/components/atoms/Card";
-import PieChart from "@/components/organisms/PieChart";
-import LineChart from "@/components/organisms/LineChart";
-import Loading from "@/components/ui/Loading";
-import Error from "@/components/ui/Error";
-import Empty from "@/components/ui/Empty";
-import ApperIcon from "@/components/ApperIcon";
+import React, { useEffect, useState } from "react";
 import { transactionService } from "@/services/api/transactionService";
-import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { endOfMonth, format, startOfMonth, subMonths } from "date-fns";
+import ApperIcon from "@/components/ApperIcon";
+import Select from "@/components/atoms/Select";
+import Button from "@/components/atoms/Button";
+import Card from "@/components/atoms/Card";
+import LineChart from "@/components/organisms/LineChart";
+import PieChart from "@/components/organisms/PieChart";
+import Loading from "@/components/ui/Loading";
+import Empty from "@/components/ui/Empty";
+import Error from "@/components/ui/Error";
 
 const Reports = () => {
   const [transactions, setTransactions] = useState([]);
@@ -47,28 +47,24 @@ const Reports = () => {
     }
   };
 
-  // Generate pie chart data for expenses by category
+// Generate pie chart data for expenses by category
   const generatePieChartData = () => {
     const monthStart = startOfMonth(new Date(selectedMonth + "-01"));
     const monthEnd = endOfMonth(new Date(selectedMonth + "-01"));
 
     const monthTransactions = transactions.filter(transaction => {
-      const transactionDate = new Date(transaction.date);
-      return (
-        transaction.type === "expense" &&
-        transactionDate >= monthStart &&
-        transactionDate <= monthEnd
-      );
+      const transactionDate = new Date(transaction.date_c);
+      return transactionDate >= monthStart && transactionDate <= monthEnd;
     });
-
-    if (monthTransactions.length === 0) return [];
 
     const categoryTotals = {};
     monthTransactions.forEach(transaction => {
-      if (categoryTotals[transaction.category]) {
-        categoryTotals[transaction.category] += transaction.amount;
-      } else {
-        categoryTotals[transaction.category] = transaction.amount;
+      if (transaction.type_c === "expense") {
+        if (categoryTotals[transaction.category_c]) {
+          categoryTotals[transaction.category_c] += transaction.amount_c;
+        } else {
+          categoryTotals[transaction.category_c] = transaction.amount_c;
+        }
       }
     });
 
@@ -91,17 +87,17 @@ const Reports = () => {
       const monthEnd = endOfMonth(monthDate);
       
       const monthTransactions = transactions.filter(transaction => {
-        const transactionDate = new Date(transaction.date);
+const transactionDate = new Date(transaction.date_c);
         return transactionDate >= monthStart && transactionDate <= monthEnd;
       });
 
       const income = monthTransactions
-        .filter(t => t.type === "income")
-        .reduce((sum, t) => sum + t.amount, 0);
+        .filter(t => t.type_c === "income")
+        .reduce((sum, t) => sum + t.amount_c, 0);
 
       const expenses = monthTransactions
-        .filter(t => t.type === "expense")
-        .reduce((sum, t) => sum + t.amount, 0);
+        .filter(t => t.type_c === "expense")
+        .reduce((sum, t) => sum + t.amount_c, 0);
 
       data.push({
         month: format(monthDate, "yyyy-MM-dd"),
@@ -113,34 +109,36 @@ const Reports = () => {
     return data;
   };
 
-  // Calculate summary statistics
+// Calculate summary statistics
   const calculateSummaryStats = () => {
     const months = parseInt(selectedPeriod);
     const cutoffDate = subMonths(new Date(), months);
     
     const periodTransactions = transactions.filter(transaction => 
-      new Date(transaction.date) >= cutoffDate
+      new Date(transaction.date_c) >= cutoffDate
     );
 
     const totalIncome = periodTransactions
-      .filter(t => t.type === "income")
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter(t => t.type_c === "income")
+      .reduce((sum, t) => sum + t.amount_c, 0);
 
     const totalExpenses = periodTransactions
-      .filter(t => t.type === "expense")
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter(t => t.type_c === "expense")
+      .reduce((sum, t) => sum + t.amount_c, 0);
 
-    const avgMonthlyIncome = totalIncome / months;
-    const avgMonthlyExpenses = totalExpenses / months;
+    const avgMonthlyIncome = months > 0 ? totalIncome / months : 0;
+    const avgMonthlyExpenses = months > 0 ? totalExpenses / months : 0;
     const netSavings = totalIncome - totalExpenses;
-    const savingsRate = totalIncome > 0 ? (netSavings / totalIncome) * 100 : 0;
 
-    // Top spending category
+    const savingsRate = totalIncome > 0
+      ? ((totalIncome - totalExpenses) / totalIncome) * 100
+      : 0;
+
     const expensesByCategory = {};
     periodTransactions
-      .filter(t => t.type === "expense")
+      .filter(t => t.type_c === "expense")
       .forEach(t => {
-        expensesByCategory[t.category] = (expensesByCategory[t.category] || 0) + t.amount;
+        expensesByCategory[t.category_c] = (expensesByCategory[t.category_c] || 0) + t.amount_c;
       });
 
     const topCategory = Object.entries(expensesByCategory)

@@ -52,12 +52,12 @@ const CategoryModal = ({ isOpen, onClose, onSubmit, category = null, mode = "add
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (category) {
+if (category) {
       setFormData({
-        name: category.name || "",
-        type: category.type || "",
-        color: category.color || "#3B82F6",
-        icon: category.icon || "ShoppingCart",
+        name: category.name_c || "",
+        type: category.type_c || "",
+        color: category.color_c || "#3B82F6",
+        icon: category.icon_c || "ShoppingCart",
       });
     } else {
       setFormData({

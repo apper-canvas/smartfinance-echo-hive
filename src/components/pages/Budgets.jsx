@@ -1,17 +1,17 @@
-import React, { useState, useEffect } from "react";
-import Button from "@/components/atoms/Button";
-import Card from "@/components/atoms/Card";
-import ProgressBar from "@/components/molecules/ProgressBar";
-import Loading from "@/components/ui/Loading";
-import Error from "@/components/ui/Error";
-import Empty from "@/components/ui/Empty";
-import BudgetModal from "@/components/organisms/BudgetModal";
-import ApperIcon from "@/components/ApperIcon";
+import React, { useEffect, useState } from "react";
 import { budgetService } from "@/services/api/budgetService";
 import { transactionService } from "@/services/api/transactionService";
 import { categoryService } from "@/services/api/categoryService";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { endOfMonth, format, startOfMonth } from "date-fns";
 import { toast } from "react-toastify";
+import ApperIcon from "@/components/ApperIcon";
+import Button from "@/components/atoms/Button";
+import Card from "@/components/atoms/Card";
+import BudgetModal from "@/components/organisms/BudgetModal";
+import Loading from "@/components/ui/Loading";
+import Empty from "@/components/ui/Empty";
+import Error from "@/components/ui/Error";
+import ProgressBar from "@/components/molecules/ProgressBar";
 
 const Budgets = () => {
   const [budgets, setBudgets] = useState([]);
@@ -59,38 +59,43 @@ const Budgets = () => {
     const monthEnd = endOfMonth(budgetDate);
     
     // Find category by ID
-    const category = categories.find(cat => cat.Id === parseInt(budget.categoryId));
+const category = categories.find(cat => cat.Id === budget.category_id_c?.Id);
     if (!category) return 0;
 
+    const categoryName = category.name_c;
+
     const spent = transactions
-      .filter(transaction => {
-        const transactionDate = new Date(transaction.date);
+      .filter((transaction) => {
         return (
-          transaction.type === "expense" &&
-          transaction.category === category.name &&
-          transactionDate >= monthStart &&
-          transactionDate <= monthEnd
+          transaction.type_c === "expense" &&
+          transaction.category_c === category.name_c &&
+          new Date(transaction.date_c) >= monthStart &&
+          new Date(transaction.date_c) <= monthEnd
         );
       })
-      .reduce((sum, transaction) => sum + transaction.amount, 0);
+      .reduce((sum, transaction) => sum + transaction.amount_c, 0);
 
     return spent;
   };
 
-  // Get budgets for selected month with spending data
-  const getCurrentMonthBudgets = () => {
+const enrichedBudgets = useMemo(() => {
+    if (!budgets.length || !categories.length) return [];
+
     return budgets
-      .filter(budget => budget.month === selectedMonth)
       .map(budget => ({
         ...budget,
         spent: calculateBudgetSpending(budget),
       }))
       .sort((a, b) => {
-        // Sort by category name
-        const categoryA = categories.find(cat => cat.Id === parseInt(a.categoryId))?.name || "";
-        const categoryB = categories.find(cat => cat.Id === parseInt(b.categoryId))?.name || "";
+        const categoryA = categories.find(cat => cat.Id === a.category_id_c?.Id)?.name_c || "";
+        const categoryB = categories.find(cat => cat.Id === b.category_id_c?.Id)?.name_c || "";
         return categoryA.localeCompare(categoryB);
       });
+  }, [budgets, categories, transactions]);
+
+  // Get budgets for the currently selected month
+  const getCurrentMonthBudgets = () => {
+    return enrichedBudgets.filter(budget => budget.month_c === selectedMonth);
   };
 
   // Calculate overall budget summary
@@ -112,8 +117,8 @@ const Budgets = () => {
   };
 
   const getCategoryName = (categoryId) => {
-    const category = categories.find(cat => cat.Id === parseInt(categoryId));
-    return category ? category.name : "Unknown Category";
+const category = categories.find(cat => cat.Id === categoryId?.Id);
+return category ? category.name_c : "Unknown";
   };
 
   const getCategoryIcon = (categoryName) => {
@@ -302,14 +307,13 @@ const Budgets = () => {
             setShowBudgetModal(true);
           }}
         />
-      ) : (
+) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {currentBudgets.map((budget) => {
-            const categoryName = getCategoryName(budget.categoryId);
-            const progress = budget.amount > 0 ? (budget.spent / budget.amount) * 100 : 0;
-            const remaining = budget.amount - budget.spent;
-            const isOverBudget = budget.spent > budget.amount;
-            
+            const categoryName = getCategoryName(budget.category_id_c);
+            const progress = budget.amount_c > 0 ? (budget.spent / budget.amount_c) * 100 : 0;
+            const remaining = budget.amount_c - budget.spent;
+            const isOverBudget = budget.spent > budget.amount_c;
             return (
               <Card key={budget.Id} className="relative">
                 <div className="flex items-start justify-between mb-4">
@@ -338,33 +342,37 @@ const Budgets = () => {
                         {categoryName}
                       </h3>
                       <p className="text-sm text-gray-600">
-                        ${budget.amount.toLocaleString()} budgeted
+${budget.amount_c.toLocaleString()} budgeted
                       </p>
+                      <div className="flex items-center space-x-2 text-xs text-gray-500">
+                        <ApperIcon name="Calendar" size={12} />
+                        <span>{format(new Date(budget.month_c + "-01"), "MMMM yyyy")}</span>
+                      </div>
                     </div>
-                  </div>
+</div>
 
-                  <div className="flex space-x-1">
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleEditBudget(budget)}
-                      className="p-2"
-                    >
-                      <ApperIcon name="Edit2" size={16} />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleDeleteBudget(budget)}
-                      className="p-2 hover:bg-red-50 hover:text-error"
-                    >
-                      <ApperIcon name="Trash2" size={16} />
-                    </Button>
-                  </div>
-                </div>
+                  <div className="mt-4">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium text-gray-700">Budget Progress</span>
+                      <span className={`text-sm font-semibold ${
+                        budget.spent > budget.amount_c ? "text-red-600" :
+                        budget.spent / budget.amount_c >= 0.8 ? "text-yellow-600" :
+                        "text-green-600"
+                      }`}>
+                        {budget.amount_c > 0 ? Math.round((budget.spent / budget.amount_c) * 100) : 0}%
+                      </span>
+                    </div>
 
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center text-sm">
+                    <ProgressBar
+                      value={budget.spent}
+                      max={budget.amount_c}
+                      variant="auto"
+                      size="md"
+                      showPercentage={false}
+                    />
+                  </div>
+                  
+                  <div className="flex justify-between items-center text-sm mt-2">
                     <span className="text-gray-600">Spent: ${budget.spent.toLocaleString()}</span>
                     <span className={`font-medium ${
                       remaining >= 0 ? "text-success" : "text-error"
@@ -373,23 +381,15 @@ const Budgets = () => {
                     </span>
                   </div>
 
-                  <ProgressBar
-                    value={budget.spent}
-                    max={budget.amount}
-                    variant="auto"
-                    size="md"
-                    showPercentage={true}
-                  />
-
                   {isOverBudget && (
-                    <div className="flex items-center space-x-2 text-sm text-error bg-red-50 rounded-lg p-3">
+                    <div className="flex items-center space-x-2 text-sm text-error bg-red-50 rounded-lg p-3 mt-3">
                       <ApperIcon name="AlertTriangle" size={16} />
                       <span className="font-medium">Over budget by ${Math.abs(remaining).toLocaleString()}</span>
                     </div>
                   )}
 
                   {progress > 80 && progress < 100 && (
-                    <div className="flex items-center space-x-2 text-sm text-warning bg-yellow-50 rounded-lg p-3">
+                    <div className="flex items-center space-x-2 text-sm text-warning bg-yellow-50 rounded-lg p-3 mt-3">
                       <ApperIcon name="AlertCircle" size={16} />
                       <span className="font-medium">Approaching budget limit</span>
                     </div>

@@ -1,11 +1,13 @@
 import React, { useState } from "react";
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "@/layouts/Root";
 import ApperIcon from "@/components/ApperIcon";
 import { cn } from "@/utils/cn";
 
 const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const { logout } = useAuth();
 
   const navigation = [
     { name: "Dashboard", href: "/", icon: "LayoutDashboard", current: location.pathname === "/" },
@@ -15,62 +17,65 @@ const Layout = () => {
     { name: "Reports", href: "/reports", icon: "BarChart3", current: location.pathname === "/reports" },
   ];
 
-  // Desktop Sidebar
   const DesktopSidebar = () => (
-    <div className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0">
-      <div className="flex flex-col flex-grow bg-white border-r border-gray-200 pt-5 pb-4 overflow-y-auto">
+    <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
+      <div className="flex flex-col flex-grow pt-5 bg-white border-r border-gray-200 overflow-y-auto">
         <div className="flex items-center flex-shrink-0 px-4">
-          <div className="flex items-center">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-lg flex items-center justify-center">
-              <ApperIcon name="DollarSign" size={20} className="text-white" />
-            </div>
-            <span className="ml-2 text-xl font-bold gradient-text">SmartFinance</span>
+          <div className="w-10 h-10 bg-gradient-to-br from-primary to-secondary rounded-xl flex items-center justify-center">
+            <ApperIcon name="Wallet" size={24} className="text-white" />
           </div>
-        </div>
-        
-        <div className="mt-8 flex-grow flex flex-col">
-          <nav className="flex-1 px-2 space-y-1">
-            {navigation.map((item) => (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={cn(
-                  item.current
-                    ? "bg-gradient-to-r from-primary-50 to-secondary-50 text-primary-700 border-r-2 border-primary-600"
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
-                  "group flex items-center px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200"
-                )}
-              >
-                <ApperIcon
-                  name={item.icon}
-                  size={20}
-                  className={cn(
-                    item.current ? "text-primary-600" : "text-gray-400 group-hover:text-gray-500",
-                    "mr-3 flex-shrink-0"
-                  )}
-                />
-                {item.name}
-              </Link>
-            ))}
-          </nav>
+          <span className="ml-3 text-xl font-bold gradient-text">SmartFinance</span>
         </div>
 
+        <nav className="mt-8 flex-1 px-2 space-y-1">
+          {navigation.map((item) => (
+            <Link
+              key={item.name}
+              to={item.href}
+              className={cn(
+                item.current
+                  ? "bg-gradient-to-r from-primary-50 to-secondary-50 text-primary-700 font-medium"
+                  : "text-gray-600 hover:bg-gray-50",
+                "group flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200"
+              )}
+            >
+              <ApperIcon
+                name={item.icon}
+                size={20}
+                className={cn(
+                  item.current ? "text-primary-600" : "text-gray-500 group-hover:text-gray-700",
+                  "mr-3"
+                )}
+              />
+              {item.name}
+            </Link>
+          ))}
+        </nav>
+
         <div className="flex-shrink-0 px-4 py-4 border-t border-gray-200">
-          <div className="flex items-center">
-            <div className="w-8 h-8 bg-gradient-to-br from-accent-400 to-accent-600 rounded-full flex items-center justify-center">
-              <ApperIcon name="User" size={16} className="text-white" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-accent-400 to-accent-600 rounded-full flex items-center justify-center">
+                <ApperIcon name="User" size={16} className="text-white" />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-700">Welcome back!</p>
+                <p className="text-xs text-gray-500">Manage your finances</p>
+              </div>
             </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-gray-700">Welcome back!</p>
-              <p className="text-xs text-gray-500">Manage your finances</p>
-            </div>
+            <button
+              onClick={logout}
+              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Logout"
+            >
+              <ApperIcon name="LogOut" size={18} />
+            </button>
           </div>
         </div>
       </div>
     </div>
   );
 
-  // Mobile Sidebar
   const MobileSidebar = () => (
     <>
       {sidebarOpen && (
@@ -141,9 +146,9 @@ const Layout = () => {
       <DesktopSidebar />
       <MobileSidebar />
       
-      <div className="flex flex-col w-0 flex-1 overflow-hidden lg:pl-64">
+      <div className="flex flex-col w-0 flex-1 overflow-hidden md:pl-64">
         {/* Mobile header */}
-        <div className="lg:hidden">
+        <div className="md:hidden">
           <div className="flex items-center justify-between bg-white px-4 py-3 border-b border-gray-200">
             <div className="flex items-center">
               <button

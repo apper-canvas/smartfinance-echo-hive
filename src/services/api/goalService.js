@@ -1,113 +1,216 @@
-import goalsData from "@/services/mockData/goals.json";
-
-// Simulate API delay
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+import { getApperClient } from "@/services/apperClient";
 
 class GoalService {
-  constructor() {
-    this.goals = [...goalsData];
-  }
-
   async getAll() {
-    await delay(300);
-    return [...this.goals];
+    try {
+      const apperClient = getApperClient();
+      const response = await apperClient.fetchRecords('goal_c', {
+        fields: [
+          {"field": {"Name": "name_c"}},
+          {"field": {"Name": "target_amount_c"}},
+          {"field": {"Name": "current_amount_c"}},
+          {"field": {"Name": "deadline_c"}},
+          {"field": {"Name": "created_at_c"}}
+        ]
+      });
+
+      if (!response.success) {
+        console.error(response.message);
+        return [];
+      }
+
+      return response.data || [];
+    } catch (error) {
+      console.error("Error fetching goals:", error?.response?.data?.message || error);
+      return [];
+    }
   }
 
   async getById(id) {
-    await delay(200);
-    const goal = this.goals.find(g => g.Id === parseInt(id));
-    if (!goal) {
-      throw new Error(`Goal with Id ${id} not found`);
+    try {
+      const apperClient = getApperClient();
+      const response = await apperClient.getRecordById('goal_c', parseInt(id), {
+        fields: [
+          {"field": {"Name": "name_c"}},
+          {"field": {"Name": "target_amount_c"}},
+          {"field": {"Name": "current_amount_c"}},
+          {"field": {"Name": "deadline_c"}},
+          {"field": {"Name": "created_at_c"}}
+        ]
+      });
+
+      if (!response.success) {
+        console.error(response.message);
+        return null;
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching goal ${id}:`, error?.response?.data?.message || error);
+      return null;
     }
-    return { ...goal };
   }
 
   async create(goalData) {
-    await delay(400);
-    
-    // Find highest Id and add 1
-    const maxId = Math.max(...this.goals.map(g => g.Id), 0);
-    const newGoal = {
-      ...goalData,
-      Id: maxId + 1,
-      createdAt: new Date().toISOString(),
-    };
-    
-    this.goals.push(newGoal);
-    return { ...newGoal };
+    try {
+      const apperClient = getApperClient();
+      const response = await apperClient.createRecord('goal_c', {
+        records: [{
+          name_c: goalData.name,
+          target_amount_c: parseFloat(goalData.targetAmount),
+          current_amount_c: parseFloat(goalData.currentAmount) || 0,
+          deadline_c: goalData.deadline,
+          created_at_c: new Date().toISOString()
+        }]
+      });
+
+      if (!response.success) {
+        console.error(response.message);
+        return null;
+      }
+
+      if (response.results) {
+        const successful = response.results.filter(r => r.success);
+        const failed = response.results.filter(r => !r.success);
+        
+        if (failed.length > 0) {
+          console.error(`Failed to create ${failed.length} goals: ${JSON.stringify(failed)}`);
+          failed.forEach(record => {
+            record.errors?.forEach(error => console.error(`${error.fieldLabel}: ${error}`));
+          });
+        }
+        
+        return successful.length > 0 ? successful[0].data : null;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error creating goal:", error?.response?.data?.message || error);
+      return null;
+    }
   }
 
   async update(id, goalData) {
-    await delay(400);
-    
-    const index = this.goals.findIndex(g => g.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error(`Goal with Id ${id} not found`);
+    try {
+      const apperClient = getApperClient();
+      const response = await apperClient.updateRecord('goal_c', {
+        records: [{
+          Id: parseInt(id),
+          name_c: goalData.name,
+          target_amount_c: parseFloat(goalData.targetAmount),
+          current_amount_c: parseFloat(goalData.currentAmount),
+          deadline_c: goalData.deadline
+        }]
+      });
+
+      if (!response.success) {
+        console.error(response.message);
+        return null;
+      }
+
+      if (response.results) {
+        const successful = response.results.filter(r => r.success);
+        const failed = response.results.filter(r => !r.success);
+        
+        if (failed.length > 0) {
+          console.error(`Failed to update ${failed.length} goals: ${JSON.stringify(failed)}`);
+          failed.forEach(record => {
+            record.errors?.forEach(error => console.error(`${error.fieldLabel}: ${error}`));
+          });
+        }
+        
+        return successful.length > 0 ? successful[0].data : null;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Error updating goal:", error?.response?.data?.message || error);
+      return null;
     }
-    
-    this.goals[index] = {
-      ...this.goals[index],
-      ...goalData,
-      Id: parseInt(id), // Ensure Id remains unchanged
-    };
-    
-    return { ...this.goals[index] };
   }
 
   async delete(id) {
-    await delay(300);
-    
-    const index = this.goals.findIndex(g => g.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error(`Goal with Id ${id} not found`);
+    try {
+      const apperClient = getApperClient();
+      const response = await apperClient.deleteRecord('goal_c', {
+        RecordIds: [parseInt(id)]
+      });
+
+      if (!response.success) {
+        console.error(response.message);
+        return false;
+      }
+
+      if (response.results) {
+        const successful = response.results.filter(r => r.success);
+        const failed = response.results.filter(r => !r.success);
+        
+        if (failed.length > 0) {
+          console.error(`Failed to delete ${failed.length} goals: ${JSON.stringify(failed)}`);
+        }
+        
+        return successful.length > 0;
+      }
+
+      return false;
+    } catch (error) {
+      console.error("Error deleting goal:", error?.response?.data?.message || error);
+      return false;
     }
-    
-    const deletedGoal = this.goals[index];
-    this.goals.splice(index, 1);
-    return { ...deletedGoal };
   }
 
-  // Additional helper methods
   async getActiveGoals() {
-    await delay(250);
-    return this.goals.filter(g => g.currentAmount < g.targetAmount);
+    const goals = await this.getAll();
+    return goals.filter(g => g.current_amount_c < g.target_amount_c);
   }
 
   async getCompletedGoals() {
-    await delay(250);
-    return this.goals.filter(g => g.currentAmount >= g.targetAmount);
+    const goals = await this.getAll();
+    return goals.filter(g => g.current_amount_c >= g.target_amount_c);
   }
 
   async addFunds(id, amount) {
-    await delay(300);
-    
-    const index = this.goals.findIndex(g => g.Id === parseInt(id));
-    if (index === -1) {
-      throw new Error(`Goal with Id ${id} not found`);
+    try {
+      const goal = await this.getById(id);
+      if (!goal) {
+        throw new Error(`Goal with Id ${id} not found`);
+      }
+
+      const newAmount = goal.current_amount_c + parseFloat(amount);
+      return await this.update(id, {
+        name: goal.name_c,
+        targetAmount: goal.target_amount_c,
+        currentAmount: newAmount,
+        deadline: goal.deadline_c
+      });
+    } catch (error) {
+      console.error("Error adding funds to goal:", error?.response?.data?.message || error);
+      return null;
     }
-    
-    this.goals[index].currentAmount += parseFloat(amount);
-    return { ...this.goals[index] };
   }
 
   async getGoalProgress(id) {
-    await delay(150);
-    
-    const goal = this.goals.find(g => g.Id === parseInt(id));
-    if (!goal) {
-      throw new Error(`Goal with Id ${id} not found`);
+    try {
+      const goal = await this.getById(id);
+      if (!goal) {
+        throw new Error(`Goal with Id ${id} not found`);
+      }
+
+      const progress = (goal.current_amount_c / goal.target_amount_c) * 100;
+      const remaining = goal.target_amount_c - goal.current_amount_c;
+      const isCompleted = goal.current_amount_c >= goal.target_amount_c;
+
+      return {
+        progress: Math.min(progress, 100),
+        remaining: Math.max(remaining, 0),
+        isCompleted,
+      };
+    } catch (error) {
+      console.error("Error calculating goal progress:", error?.response?.data?.message || error);
+      return null;
     }
-    
-    const progress = (goal.currentAmount / goal.targetAmount) * 100;
-    const remaining = goal.targetAmount - goal.currentAmount;
-    const isCompleted = goal.currentAmount >= goal.targetAmount;
-    
-    return {
-      progress: Math.min(progress, 100),
-      remaining: Math.max(remaining, 0),
-      isCompleted,
-    };
   }
 }
 
+export const goalService = new GoalService();
 export const goalService = new GoalService();

@@ -79,38 +79,36 @@ const handleSaveCategory = async (categoryData) => {
 
     // Filter by type
     if (filters.type) {
-      filtered = filtered.filter(t => t.type === filters.type);
+filtered = filtered.filter(t => t.type_c === filters.type);
     }
 
-    // Filter by category
     if (filters.category) {
-      filtered = filtered.filter(t => t.category === filters.category);
+      filtered = filtered.filter(t => t.category_c === filters.category);
     }
 
-    // Filter by date range
     if (filters.startDate) {
       const startDate = new Date(filters.startDate);
-      filtered = filtered.filter(t => new Date(t.date) >= startDate);
+      filtered = filtered.filter(t => new Date(t.date_c) >= startDate);
     }
 
     if (filters.endDate) {
       const endDate = new Date(filters.endDate);
-      endDate.setHours(23, 59, 59, 999); // End of day
-      filtered = filtered.filter(t => new Date(t.date) <= endDate);
+      filtered = filtered.filter(t => new Date(t.date_c) <= endDate);
+if (filters.endDate) {
+      const endDate = new Date(filters.endDate);
+      filtered = filtered.filter(t => new Date(t.date_c) <= endDate);
     }
 
-    // Filter by search term
     if (filters.searchTerm) {
-      const searchTerm = filters.searchTerm.toLowerCase();
-      filtered = filtered.filter(t => 
-        t.description.toLowerCase().includes(searchTerm) ||
-        t.category.toLowerCase().includes(searchTerm) ||
-        (t.notes && t.notes.toLowerCase().includes(searchTerm))
+      const lowerSearch = filters.searchTerm.toLowerCase();
+      filtered = filtered.filter(t =>
+        t.description_c.toLowerCase().includes(filters.searchTerm) ||
+        t.category_c.toLowerCase().includes(filters.searchTerm) ||
+        (t.notes_c && t.notes_c.toLowerCase().includes(filters.searchTerm))
       );
     }
 
-    // Sort by date (newest first)
-    filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+    filtered.sort((a, b) => new Date(b.date_c) - new Date(a.date_c));
 
     setFilteredTransactions(filtered);
   };
@@ -190,15 +188,16 @@ const closeModal = () => {
   // Calculate totals for filtered transactions
   const calculateTotals = () => {
     const income = filteredTransactions
-      .filter(t => t.type === "income")
-      .reduce((sum, t) => sum + t.amount, 0);
+.filter(t => t.type_c === "income")
+const income = filteredTransactions
+.filter(t => t.type_c === "income")
+      .reduce((sum, t) => sum + t.amount_c, 0);
 
     const expenses = filteredTransactions
-      .filter(t => t.type === "expense")
-      .reduce((sum, t) => sum + t.amount, 0);
+      .filter(t => t.type_c === "expense")
+.reduce((sum, t) => sum + t.amount_c, 0);
 
     return { income, expenses, balance: income - expenses };
-  };
 
   if (loading) {
     return <Loading type="table" />;
@@ -358,8 +357,8 @@ return (
               onChange={(e) => handleFilterChange("category", e.target.value)}
             >
               {categories.map((category) => (
-                <option key={category.Id} value={category.name}>
-                  {category.name}
+<option key={category.Id} value={category.name_c}>
+                  {category.name_c}
                 </option>
               ))}
             </Select>

@@ -41,12 +41,12 @@ const TransactionModal = ({ isOpen, onClose, onSubmit, transaction = null, mode 
   useEffect(() => {
     if (transaction && mode === "edit") {
       setFormData({
-        type: transaction.type,
-        amount: transaction.amount.toString(),
-        category: transaction.category,
-        description: transaction.description,
-        date: format(new Date(transaction.date), "yyyy-MM-dd"),
-        notes: transaction.notes || "",
+type: transaction.type_c,
+        amount: transaction.amount_c.toString(),
+        category: transaction.category_c,
+        description: transaction.description_c,
+        date: format(new Date(transaction.date_c), "yyyy-MM-dd"),
+        notes: transaction.notes_c || "",
       });
     } else {
       setFormData({
@@ -201,8 +201,8 @@ const TransactionModal = ({ isOpen, onClose, onSubmit, transaction = null, mode 
             placeholder="Select a category"
           >
             {filteredCategories.map((category) => (
-              <option key={category.Id} value={category.name}>
-                {category.name}
+<option key={category.Id} value={category.name_c}>
+                {category.name_c}
               </option>
             ))}
           </Select>
