@@ -19,7 +19,7 @@ const BudgetModal = ({ isOpen, onClose, onSubmit, budget = null, mode = "add" })
   const [loading, setLoading] = useState(false);
 
   // Load categories on mount
-  useEffect(() => {
+useEffect(() => {
     const loadCategories = async () => {
       try {
         const response = await categoryService.getCategories();
@@ -27,7 +27,6 @@ const BudgetModal = ({ isOpen, onClose, onSubmit, budget = null, mode = "add" })
       } catch (error) {
         console.error("Failed to load categories:", error);
         toast.error("Failed to load categories");
-      }
       }
     };
 

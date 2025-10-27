@@ -2,8 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { budgetService } from "@/services/api/budgetService";
 import { transactionService } from "@/services/api/transactionService";
 import { categoryService } from "@/services/api/categoryService";
-import { endOfMonth, startOfMonth, format } from "date-fns";
-import { safeFormat } from "@/utils/dateUtils";
+import { endOfMonth, format, startOfMonth } from "date-fns";
 import { toast } from "react-toastify";
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
@@ -13,6 +12,7 @@ import Loading from "@/components/ui/Loading";
 import Empty from "@/components/ui/Empty";
 import Error from "@/components/ui/Error";
 import ProgressBar from "@/components/molecules/ProgressBar";
+import { safeFormat } from "@/utils/dateUtils";
 
 const Budgets = () => {
   const [budgets, setBudgets] = useState([]);
@@ -93,7 +93,6 @@ const enrichedBudgets = useMemo(() => {
         return categoryA.localeCompare(categoryB);
       });
   }, [budgets, categories, transactions]);
-}, [budgets, categories, transactions]);
 
   // Get budgets for the currently selected month
   const getCurrentMonthBudgets = () => {
@@ -422,17 +421,16 @@ ${budget.amount_c.toLocaleString()} budgeted
                   )}
 
                   {progress > 80 && progress < 100 && (
-                    <div className="flex items-center space-x-2 text-sm text-warning bg-yellow-50 rounded-lg p-3 mt-3">
+<div className="flex items-center space-x-2 text-sm text-warning bg-yellow-50 rounded-lg p-3 mt-3">
                       <ApperIcon name="AlertCircle" size={16} />
                       <span className="font-medium">Approaching budget limit</span>
                     </div>
                   )}
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                </Card>
+              );
+            })}
+          </div>
+        )}
 
       {/* Budget Modal */}
       <BudgetModal

@@ -48,7 +48,6 @@ useEffect(() => {
         notes: transaction.notes_c || "",
       });
     } else {
-} else {
       setFormData({
         type: "expense",
         amount: "",
