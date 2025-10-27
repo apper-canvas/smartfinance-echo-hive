@@ -93,10 +93,10 @@ filtered = filtered.filter(t => t.type_c === filters.type);
 
     if (filters.endDate) {
       const endDate = new Date(filters.endDate);
-      filtered = filtered.filter(t => new Date(t.date_c) <= endDate);
 if (filters.endDate) {
       const endDate = new Date(filters.endDate);
       filtered = filtered.filter(t => new Date(t.date_c) <= endDate);
+    }
     }
 
     if (filters.searchTerm) {
