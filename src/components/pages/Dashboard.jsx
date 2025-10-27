@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { transactionService } from "@/services/api/transactionService";
 import { budgetService } from "@/services/api/budgetService";
 import { goalService } from "@/services/api/goalService";
-import { endOfMonth, format, startOfMonth } from "date-fns";
+import { endOfMonth, startOfMonth, format } from "date-fns";
+import { safeFormat } from "@/utils/dateUtils";
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
@@ -77,21 +78,29 @@ const Dashboard = () => {
     };
   };
 
-  const getRecentTransactions = () => {
+const getRecentTransactions = () => {
     return transactions
       .sort((a, b) => new Date(b.date_c) - new Date(a.date_c))
-      .slice(0, 3);
+      .slice(0, 5);
   };
 
   const getTotalSavingsProgress = () => {
+    if (!goals || goals.length === 0) {
+      return {
+        totalTarget: 0,
+        totalCurrent: 0,
+        progress: 0
+      };
+    }
+
     const totalTarget = goals.reduce((sum, goal) => sum + (goal.target_amount_c || 0), 0);
     const totalCurrent = goals.reduce((sum, goal) => sum + (goal.current_amount_c || 0), 0);
     const progress = totalTarget > 0 ? (totalCurrent / totalTarget) * 100 : 0;
 
     return {
-      totalCurrent: totalCurrent,
-      totalTarget: totalTarget,
-      progress: progress
+      totalTarget,
+      totalCurrent,
+      progress
     };
   };
 
@@ -103,9 +112,9 @@ const Dashboard = () => {
     const progress = totalBudgeted > 0 ? (totalSpent / totalBudgeted) * 100 : 0;
 
     return {
-      totalBudgeted: totalBudgeted,
-      totalSpent: totalSpent,
-      progress: progress
+      totalBudgeted,
+      totalSpent,
+      progress
     };
   };
 

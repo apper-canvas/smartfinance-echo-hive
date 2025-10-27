@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import Chart from "react-apexcharts";
+import { safeFormat } from "@/utils/dateUtils";
 import Card from "@/components/atoms/Card";
 import Loading from "@/components/ui/Loading";
-import Error from "@/components/ui/Error";
 import Empty from "@/components/ui/Empty";
-import { format } from "date-fns";
+import Error from "@/components/ui/Error";
 
 const LineChart = ({ 
   data = [], 
@@ -16,9 +16,9 @@ const LineChart = ({
   const [chartOptions, setChartOptions] = useState({});
   const [chartSeries, setChartSeries] = useState([]);
 
-  useEffect(() => {
+useEffect(() => {
     if (data && data.length > 0) {
-      const categories = data.map(item => format(new Date(item.month), "MMM yyyy"));
+      const categories = data.map(item => safeFormat(new Date(item.month), "MMM yyyy"));
       const incomeData = data.map(item => item.income);
       const expenseData = data.map(item => item.expenses);
       
@@ -40,16 +40,11 @@ const LineChart = ({
           type: "line",
           height: 350,
           toolbar: {
-            show: true,
-            tools: {
-              download: true,
-              selection: false,
-              zoom: false,
-              zoomin: false,
-              zoomout: false,
-              pan: false,
-              reset: false,
-            },
+            show: false,
+            zoomin: false,
+            zoomout: false,
+            pan: false,
+            reset: false,
           },
           animations: {
             enabled: true,

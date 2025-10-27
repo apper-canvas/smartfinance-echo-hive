@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { categoryService } from "@/services/api/categoryService";
 import { format } from "date-fns";
+import { categoryService } from "@/services/api/categoryService";
+import { safeFormat } from "@/utils/dateUtils";
 import { toast } from "react-toastify";
 import ApperIcon from "@/components/ApperIcon";
 import Select from "@/components/atoms/Select";
@@ -21,11 +22,12 @@ const BudgetModal = ({ isOpen, onClose, onSubmit, budget = null, mode = "add" })
   useEffect(() => {
     const loadCategories = async () => {
       try {
-const data = await categoryService.getAll();
-        setCategories(data.filter(cat => cat.type_c === "expense"));
+        const response = await categoryService.getCategories();
+        setCategories(response?.data || []);
       } catch (error) {
         console.error("Failed to load categories:", error);
         toast.error("Failed to load categories");
+      }
       }
     };
 

@@ -1,7 +1,7 @@
 import React from "react";
+import { safeFormat } from "@/utils/dateUtils";
 import ApperIcon from "@/components/ApperIcon";
 import Badge from "@/components/atoms/Badge";
-import { format } from "date-fns";
 
 const TransactionItem = ({ transaction, onEdit, onDelete, showActions = true }) => {
   const formatCurrency = (amount) => {
@@ -31,7 +31,7 @@ const TransactionItem = ({ transaction, onEdit, onDelete, showActions = true }) 
 
   const getCategoryIcon = (category) => {
     const icons = {
-      "Food & Dining": "Utensils",
+      "Food & Dining": "Coffee",
       "Transportation": "Car",
       "Shopping": "ShoppingBag",
       "Bills & Utilities": "Receipt",
@@ -44,31 +44,30 @@ const TransactionItem = ({ transaction, onEdit, onDelete, showActions = true }) 
     };
     return icons[category] || "Circle";
   };
-
-  return (
+return (
     <div className="flex items-center justify-between py-4 px-6 bg-white border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors duration-200">
       <div className="flex items-center space-x-4 flex-1">
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getCategoryColor(transaction.category)}`}>
-          <ApperIcon name={getCategoryIcon(transaction.category)} size={20} />
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${getCategoryColor(transaction?.category || 'Other')}`}>
+          <ApperIcon name={getCategoryIcon(transaction?.category || 'Other')} size={20} />
         </div>
         
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-3 mb-1">
             <p className="text-sm font-medium text-gray-900 truncate">
-              {transaction.description}
+              {transaction?.description || 'No description'}
             </p>
             <Badge 
-              variant={transaction.type === "income" ? "success" : "default"} 
+              variant={transaction?.type === "income" ? "success" : "default"} 
               size="sm"
             >
-              {transaction.type}
+              {transaction?.type || 'expense'}
             </Badge>
           </div>
           <div className="flex items-center space-x-3 text-xs text-gray-500">
-            <span>{transaction.category}</span>
+            <span>{transaction?.category || 'Other'}</span>
             <span>•</span>
-            <span>{format(new Date(transaction.date), "MMM dd, yyyy")}</span>
-            {transaction.notes && (
+            <span>{transaction?.date ? safeFormat(new Date(transaction.date), "MMM dd, yyyy", "No date") : "No date"}</span>
+            {transaction?.notes && (
               <>
                 <span>•</span>
                 <span className="truncate max-w-[200px]">{transaction.notes}</span>
@@ -78,12 +77,12 @@ const TransactionItem = ({ transaction, onEdit, onDelete, showActions = true }) 
         </div>
       </div>
 
-      <div className="flex items-center space-x-4">
+<div className="flex items-center space-x-4">
         <div className="text-right">
           <p className={`text-lg font-semibold ${
-            transaction.type === "income" ? "text-success" : "text-gray-900"
+            transaction?.type === "income" ? "text-success" : "text-gray-900"
           }`}>
-            {transaction.type === "income" ? "+" : "-"}{formatCurrency(transaction.amount)}
+            {transaction?.type === "income" ? "+" : "-"}{formatCurrency(transaction?.amount || 0)}
           </p>
         </div>
 

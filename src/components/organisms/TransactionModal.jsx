@@ -1,20 +1,19 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { categoryService } from "@/services/api/categoryService";
+import { safeFormat } from "@/utils/dateUtils";
+import { toast } from "react-toastify";
+import ApperIcon from "@/components/ApperIcon";
+import Select from "@/components/atoms/Select";
 import Button from "@/components/atoms/Button";
 import Input from "@/components/atoms/Input";
-import Select from "@/components/atoms/Select";
-import ApperIcon from "@/components/ApperIcon";
-import { categoryService } from "@/services/api/categoryService";
-import { format } from "date-fns";
-import { toast } from "react-toastify";
-
 const TransactionModal = ({ isOpen, onClose, onSubmit, transaction = null, mode = "add" }) => {
   const [categories, setCategories] = useState([]);
-  const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
     type: "expense",
     amount: "",
     category: "",
     description: "",
-    date: format(new Date(), "yyyy-MM-dd"),
+    date: safeFormat(new Date(), "yyyy-MM-dd"),
     notes: "",
   });
   const [errors, setErrors] = useState({});
@@ -24,8 +23,8 @@ const TransactionModal = ({ isOpen, onClose, onSubmit, transaction = null, mode 
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const data = await categoryService.getAll();
-        setCategories(data);
+        const response = await categoryService.getCategories();
+        setCategories(response?.data || []);
       } catch (error) {
         console.error("Failed to load categories:", error);
         toast.error("Failed to load categories");
@@ -38,23 +37,24 @@ const TransactionModal = ({ isOpen, onClose, onSubmit, transaction = null, mode 
   }, [isOpen]);
 
   // Set form data when transaction prop changes
-  useEffect(() => {
+useEffect(() => {
     if (transaction && mode === "edit") {
       setFormData({
-type: transaction.type_c,
-        amount: transaction.amount_c.toString(),
-        category: transaction.category_c,
-        description: transaction.description_c,
-        date: format(new Date(transaction.date_c), "yyyy-MM-dd"),
+        type: transaction.type_c || "expense",
+        amount: transaction.amount_c?.toString() || "",
+        category: transaction.category_c || "",
+        description: transaction.description_c || "",
+        date: transaction.date_c ? safeFormat(new Date(transaction.date_c), "yyyy-MM-dd") : safeFormat(new Date(), "yyyy-MM-dd"),
         notes: transaction.notes_c || "",
       });
     } else {
+} else {
       setFormData({
         type: "expense",
         amount: "",
         category: "",
         description: "",
-        date: format(new Date(), "yyyy-MM-dd"),
+        date: safeFormat(new Date(), "yyyy-MM-dd"),
         notes: "",
       });
     }

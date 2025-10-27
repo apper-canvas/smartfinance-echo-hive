@@ -1,8 +1,9 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { budgetService } from "@/services/api/budgetService";
 import { transactionService } from "@/services/api/transactionService";
 import { categoryService } from "@/services/api/categoryService";
-import { endOfMonth, format, startOfMonth } from "date-fns";
+import { endOfMonth, startOfMonth, format } from "date-fns";
+import { safeFormat } from "@/utils/dateUtils";
 import { toast } from "react-toastify";
 import ApperIcon from "@/components/ApperIcon";
 import Button from "@/components/atoms/Button";
@@ -92,17 +93,19 @@ const enrichedBudgets = useMemo(() => {
         return categoryA.localeCompare(categoryB);
       });
   }, [budgets, categories, transactions]);
+}, [budgets, categories, transactions]);
 
   // Get budgets for the currently selected month
   const getCurrentMonthBudgets = () => {
     return enrichedBudgets.filter(budget => budget.month_c === selectedMonth);
   };
 
-  // Calculate overall budget summary
+  // Calculate budget summary for current month
   const getBudgetSummary = () => {
     const monthBudgets = getCurrentMonthBudgets();
-    const totalBudgeted = monthBudgets.reduce((sum, budget) => sum + budget.amount, 0);
-    const totalSpent = monthBudgets.reduce((sum, budget) => sum + budget.spent, 0);
+    
+    const totalBudgeted = monthBudgets.reduce((sum, budget) => sum + (budget.amount_c || 0), 0);
+    const totalSpent = monthBudgets.reduce((sum, budget) => sum + (budget.spent || 0), 0);
     const remaining = totalBudgeted - totalSpent;
     const progress = totalBudgeted > 0 ? (totalSpent / totalBudgeted) * 100 : 0;
 
@@ -112,10 +115,9 @@ const enrichedBudgets = useMemo(() => {
       remaining,
       progress,
       budgetCount: monthBudgets.length,
-      overBudget: monthBudgets.filter(budget => budget.spent > budget.amount).length,
+      overBudget: monthBudgets.filter(budget => (budget.spent || 0) > (budget.amount_c || 0)).length,
     };
   };
-
   const getCategoryName = (categoryId) => {
 const category = categories.find(cat => cat.Id === categoryId?.Id);
 return category ? category.name_c : "Unknown";
@@ -129,14 +131,20 @@ return category ? category.name_c : "Unknown";
       "Bills & Utilities": "Receipt",
       "Healthcare": "Heart",
       "Entertainment": "Film",
-      "Other": "Circle",
+"Other": "Circle",
     };
     return icons[categoryName] || "Circle";
   };
 
   const handleAddBudget = async (budgetData) => {
-    await budgetService.create(budgetData);
-    await loadData();
+    try {
+      await budgetService.create(budgetData);
+      await loadData();
+      toast.success("Budget created successfully");
+    } catch (error) {
+      console.error("Failed to create budget:", error);
+      toast.error("Failed to create budget");
+    }
   };
 
   const handleEditBudget = (budget) => {
@@ -145,9 +153,15 @@ return category ? category.name_c : "Unknown";
     setShowBudgetModal(true);
   };
 
-  const handleUpdateBudget = async (budgetData) => {
-    await budgetService.update(editingBudget.Id, budgetData);
-    await loadData();
+const handleUpdateBudget = async (budgetData) => {
+    try {
+      await budgetService.update(editingBudget.Id, budgetData);
+      await loadData();
+      toast.success("Budget updated successfully");
+    } catch (error) {
+      console.error("Failed to update budget:", error);
+      toast.error("Failed to update budget");
+    }
   };
 
   const handleDeleteBudget = async (budget) => {
@@ -169,7 +183,7 @@ return category ? category.name_c : "Unknown";
     setModalMode("add");
   };
 
-  const changeMonth = (direction) => {
+const changeMonth = (direction) => {
     const currentDate = new Date(selectedMonth + "-01");
     if (direction === "prev") {
       currentDate.setMonth(currentDate.getMonth() - 1);
@@ -180,7 +194,7 @@ return category ? category.name_c : "Unknown";
   };
 
   if (loading) {
-    return <Loading type="cards" />;
+return <Loading type="cards" />;
   }
 
   if (error) {
@@ -348,10 +362,29 @@ ${budget.amount_c.toLocaleString()} budgeted
                         <ApperIcon name="Calendar" size={12} />
                         <span>{format(new Date(budget.month_c + "-01"), "MMMM yyyy")}</span>
                       </div>
-                    </div>
 </div>
+                  </div>
 
-                  <div className="mt-4">
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleEditBudget(budget)}
+                    >
+                      <ApperIcon name="Edit2" size={14} />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleDeleteBudget(budget)}
+                      className="text-error hover:bg-red-50"
+                    >
+                      <ApperIcon name="Trash2" size={14} />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="mt-4">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-medium text-gray-700">Budget Progress</span>
                       <span className={`text-sm font-semibold ${

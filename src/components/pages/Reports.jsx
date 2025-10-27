@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { transactionService } from "@/services/api/transactionService";
 import { endOfMonth, format, startOfMonth, subMonths } from "date-fns";
+import { safeFormat } from "@/utils/dateUtils";
 import ApperIcon from "@/components/ApperIcon";
 import Select from "@/components/atoms/Select";
 import Button from "@/components/atoms/Button";
@@ -33,21 +34,21 @@ const Reports = () => {
     }
   }, [selectedPeriod, selectedMonth, transactions]);
 
-  const loadTransactions = async () => {
+const loadTransactions = async () => {
     setLoading(true);
     setError("");
     try {
-      const transactionsData = await transactionService.getAll();
-      setTransactions(transactionsData);
+      const response = await transactionService.getAllTransactions();
+      setTransactions(response.data || []);
     } catch (err) {
-      setError("Failed to load transaction data for reports");
-      console.error("Reports loading error:", err);
+      console.error("Failed to load transactions:", err);
+      setError(err.message || "Failed to load transactions. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-// Generate pie chart data for expenses by category
+  // Generate pie chart data for expenses by category
   const generatePieChartData = () => {
     const monthStart = startOfMonth(new Date(selectedMonth + "-01"));
     const monthEnd = endOfMonth(new Date(selectedMonth + "-01"));
@@ -58,15 +59,15 @@ const Reports = () => {
     });
 
     const categoryTotals = {};
-    monthTransactions.forEach(transaction => {
-      if (transaction.type_c === "expense") {
+    monthTransactions
+      .filter(t => t.type_c === "expense")
+      .forEach(transaction => {
         if (categoryTotals[transaction.category_c]) {
           categoryTotals[transaction.category_c] += transaction.amount_c;
         } else {
           categoryTotals[transaction.category_c] = transaction.amount_c;
         }
-      }
-    });
+      });
 
     return Object.entries(categoryTotals)
       .map(([category, amount]) => ({
@@ -87,7 +88,7 @@ const Reports = () => {
       const monthEnd = endOfMonth(monthDate);
       
       const monthTransactions = transactions.filter(transaction => {
-const transactionDate = new Date(transaction.date_c);
+        const transactionDate = new Date(transaction.date_c);
         return transactionDate >= monthStart && transactionDate <= monthEnd;
       });
 
@@ -100,7 +101,7 @@ const transactionDate = new Date(transaction.date_c);
         .reduce((sum, t) => sum + t.amount_c, 0);
 
       data.push({
-        month: format(monthDate, "yyyy-MM-dd"),
+        month: format(monthDate, "MMM yyyy"),
         income,
         expenses,
       });
@@ -109,7 +110,7 @@ const transactionDate = new Date(transaction.date_c);
     return data;
   };
 
-// Calculate summary statistics
+  // Calculate summary statistics
   const calculateSummaryStats = () => {
     const months = parseInt(selectedPeriod);
     const cutoffDate = subMonths(new Date(), months);
@@ -180,7 +181,6 @@ const transactionDate = new Date(transaction.date_c);
     linkElement.setAttribute("download", exportFileDefaultName);
     linkElement.click();
   };
-
   if (loading) {
     return <Loading type="cards" />;
   }
